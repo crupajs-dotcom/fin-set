@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /zdroj/
+
+Sitemap: https://fin-set.cz/sitemap.xml
