@@ -46,20 +46,20 @@ prokliky jsou okamžité.
 ## Formulář
 
 Oba formuláře (stránka Kontakt i boční formulář u služeb) posílají data na
-`/api/poptavka` – Vercel funkci v `api/poptavka.js`. Ta pošle poptávku ze
-schránky **info@fin-set.cz** na **info@fin-set.cz** (Odpovědět = odpověď klientovi)
-a klientovi automatické potvrzení. Používá `nodemailer` (viz `package.json`),
-Vercel ho nainstaluje sám.
+`/api/poptavka` – Vercel funkci v `api/poptavka.js`. Ta pošle na
+**info@fin-set.cz** upozornění, že klient zadal poptávku, s jeho údaji
+(Odpovědět = odpověď klientovi). Klientovi se nic neposílá. Odesílá se přes
+SMTP odesílací schránky (výchozí Gmail). Používá `nodemailer` (viz
+`package.json`), Vercel ho nainstaluje sám.
 
 Ve Vercelu (Settings → Environment Variables) musí být nastaveno:
 
 | Proměnná | Hodnota |
 |---|---|
-| `SMTP_PASS` | heslo ke schránce info@fin-set.cz (povinné) |
-| `SMTP_USER` | volitelně, výchozí `info@fin-set.cz` |
-| `SMTP_HOST` / `SMTP_PORT` | volitelně, výchozí `wes1-smtp.wedos.net` / `465` |
+| `SMTP_USER` | odesílací schránka (Gmail adresa) – povinné |
+| `SMTP_PASS` | heslo aplikace Google (myaccount.google.com/apppasswords) – povinné |
+| `SMTP_HOST` / `SMTP_PORT` | volitelně, výchozí `smtp.gmail.com` / `465` |
 | `POPTAVKA_TO` | volitelně jiný příjemce, výchozí `info@fin-set.cz` |
-| `POPTAVKA_POTVRZENI` | `0` vypne potvrzení klientovi |
 
 Po změně proměnných je potřeba projekt znovu nasadit (Redeploy). Když odeslání
 selže, formulář netvrdí, že poptávka odešla — nabídne telefon a e-mail

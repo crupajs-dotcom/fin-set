@@ -1006,7 +1006,7 @@ function renderKontakt(m, search) {
           <div class="form-success" id="contact-success" style="background:var(--bg-card);border:1px solid var(--border-dark);border-radius:var(--radius-lg)">
             <div class="form-success-icon">✓</div>
             <h3>Poptávka odeslána!</h3>
-            <p>Děkujeme za váš zájem o naše služby. Na váš e-mail jsme vám zaslali potvrzení — náš specialista vás bude kontaktovat telefonicky do 24 hodin.</p>
+            <p>Děkujeme za váš zájem o naše služby. Náš specialista vás bude kontaktovat telefonicky do 24 hodin.</p>
           </div>
         </div>
 
@@ -1400,7 +1400,7 @@ function validateField(el) {
 
 /* ── Odeslání poptávky ───────────────────────────────────
    Formulář posílá data na /api/poptavka (Vercel funkce v api/poptavka.js),
-   která je odešle ze schránky info@fin-set.cz a klientovi pošle potvrzení.
+   která pošle na info@fin-set.cz upozornění s údaji klienta.
 ──────────────────────────────────────────────────────── */
 function sendContactEmails(data) {
   const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;

@@ -1,21 +1,19 @@
 /**
- * POST /api/poptavka – odešle poptávku z formuláře na info@fin-set.cz
- * a klientovi potvrzení. Posílá se přímo ze schránky info@fin-set.cz (WEDOS SMTP),
- * takže údaje klientů neprochází žádnou další službou.
+ * POST /api/poptavka – pošle na info@fin-set.cz upozornění, že klient zadal poptávku
+ * (s jeho údaji, Odpovědět = odpověď klientovi). Klientovi se nic neposílá.
+ * Odesílá se přes SMTP odesílací schránky (výchozí Gmail).
  *
  * Proměnné prostředí (Vercel → Settings → Environment Variables):
- *   SMTP_PASS   heslo ke schránce info@fin-set.cz            (povinné)
- *   SMTP_USER   přihlašovací jméno, výchozí info@fin-set.cz
- *   SMTP_HOST   výchozí wes1-smtp.wedos.net
+ *   SMTP_USER   odesílací schránka, např. Gmail adresa              (povinné)
+ *   SMTP_PASS   heslo aplikace Google (16 znaků) / heslo schránky   (povinné)
+ *   SMTP_HOST   výchozí smtp.gmail.com
  *   SMTP_PORT   výchozí 465 (SSL); 587 = STARTTLS
- *   POPTAVKA_TO kam poptávky chodí, výchozí info@fin-set.cz
- *   POPTAVKA_POTVRZENI=0  vypne potvrzovací e-mail klientovi
+ *   POPTAVKA_TO kam upozornění chodí, výchozí info@fin-set.cz
  */
 const nodemailer = require('nodemailer');
 
-const USER = process.env.SMTP_USER || 'info@fin-set.cz';
+const USER = process.env.SMTP_USER;
 const TO = process.env.POPTAVKA_TO || 'info@fin-set.cz';
-const FROM = { name: 'fin-set.cz', address: USER };
 const PORT = Number(process.env.SMTP_PORT || 465);
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -30,10 +28,10 @@ let transporter;
 function getTransporter() {
   if (!transporter) {
     transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'wes1-smtp.wedos.net',
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: PORT,
       secure: PORT === 465,
-      auth: { user: USER, pass: process.env.SMTP_PASS },
+      auth: { user: USER, pass: String(process.env.SMTP_PASS).replace(/\s+/g, '') },
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 15000,
@@ -55,8 +53,8 @@ module.exports = async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'method_not_allowed' });
   }
-  if (!process.env.SMTP_PASS) {
-    console.error('[poptavka] Chybí SMTP_PASS – nastavte ho ve Vercelu.');
+  if (!USER || !process.env.SMTP_PASS) {
+    console.error('[poptavka] Chybí SMTP_USER nebo SMTP_PASS – nastavte je ve Vercelu.');
     return res.status(500).json({ ok: false, error: 'not_configured' });
   }
 
@@ -85,8 +83,8 @@ module.exports = async function handler(req, res) {
   const when = new Date().toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' });
   const rows = [
     ['Jméno', d.name],
-    ['E-mail', d.email],
     ['Telefon', d.phone],
+    ['E-mail', d.email],
     ['Typ poptávky', d.type],
     ['Zpráva', d.message || '—'],
     ['Odesláno', when],
@@ -94,46 +92,26 @@ module.exports = async function handler(req, res) {
   ];
   const html =
     '<div style="font-family:Arial,sans-serif;font-size:14px;color:#111">' +
-    '<h2 style="margin:0 0 12px">Nová poptávka z webu fin-set.cz</h2>' +
+    '<h2 style="margin:0 0 12px">Klient zadal poptávku na webu fin-set.cz</h2>' +
     '<table cellpadding="6" style="border-collapse:collapse">' +
     rows.map(([k, v]) =>
       `<tr><td style="color:#666;vertical-align:top;white-space:nowrap"><b>${esc(k)}</b></td>` +
       `<td style="white-space:pre-wrap">${esc(v)}</td></tr>`).join('') +
     '</table><p style="color:#666;font-size:12px">Odpovědí na tento e-mail píšete přímo klientovi.</p></div>';
-  const text = rows.map(([k, v]) => `${k}: ${v}`).join('\n');
+  const text = 'Klient zadal poptávku na webu fin-set.cz.\n\n' + rows.map(([k, v]) => `${k}: ${v}`).join('\n');
 
-  const mailer = getTransporter();
   try {
-    await mailer.sendMail({
-      from: FROM,
+    await getTransporter().sendMail({
+      from: { name: 'Web fin-set.cz', address: USER },
       to: TO,
       replyTo: { name: d.name, address: d.email },
-      subject: `Nová poptávka: ${d.type} – ${d.name}`,
+      subject: `Nová poptávka z webu: ${d.name} (${d.type})`,
       text,
       html,
     });
   } catch (err) {
     console.error('[poptavka] Odeslání selhalo:', err && err.message);
     return res.status(502).json({ ok: false, error: 'send_failed' });
-  }
-
-  // Potvrzení klientovi – když selže, poptávka je přesto doručená.
-  if (process.env.POPTAVKA_POTVRZENI !== '0') {
-    try {
-      await mailer.sendMail({
-        from: FROM,
-        to: { name: d.name, address: d.email },
-        replyTo: TO,
-        subject: 'Vaši poptávku jsme přijali – fin-set.cz',
-        text:
-          `Dobrý den,\n\nděkujeme za vaši poptávku (${d.type}). ` +
-          `Náš specialista se vám ozve telefonicky do 24 hodin na čísle ${d.phone}.\n\n` +
-          'Pokud chcete cokoli doplnit, stačí odpovědět na tento e-mail.\n\n' +
-          'S pozdravem\ntým fin-set.cz\n+420 775 939 596 · info@fin-set.cz · www.fin-set.cz',
-      });
-    } catch (err) {
-      console.warn('[poptavka] Potvrzení klientovi neodešlo:', err && err.message);
-    }
   }
 
   return res.status(200).json({ ok: true });
