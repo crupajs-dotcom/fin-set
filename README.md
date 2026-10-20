@@ -46,24 +46,28 @@ prokliky jsou okamžité.
 ## Formulář
 
 Oba formuláře (stránka Kontakt i boční formulář u služeb) posílají data na
-`/api/poptavka` – Vercel funkci v `api/poptavka.js`. Ta pošle na
-**info@fin-set.cz** upozornění, že klient zadal poptávku, s jeho údaji
-(Odpovědět = odpověď klientovi). Klientovi se nic neposílá. Odesílá se přes
-SMTP odesílací schránky (výchozí Gmail). Používá `nodemailer` (viz
-`package.json`), Vercel ho nainstaluje sám.
+`/api/poptavka` – Vercel funkci v `api/poptavka.js`. Ta údaje zkontroluje a předá
+Google Apps Scriptu (web app v účtu pavlikj.03@gmail.com, kopie kódu
+v `zdroj/apps-script-poptavky.gs`). Skript:
 
-Ve Vercelu (Settings → Environment Variables) musí být nastaveno:
+1. zapíše poptávku jako nový řádek do Google Tabulky **Poptávky fin-set.cz**
+   (sloupce Přijato, Jméno, Telefon, E-mail, Typ, Zpráva, Stránka, Stav, Poznámka),
+2. pošle na **info@fin-set.cz** upozornění s údaji klienta (Odpovědět = klient).
+
+Klientovi se nic neposílá. Žádné npm závislosti ani SMTP hesla.
+
+Ve Vercelu (Settings → Environment Variables):
 
 | Proměnná | Hodnota |
 |---|---|
-| `SMTP_USER` | odesílací schránka (Gmail adresa) – povinné |
-| `SMTP_PASS` | heslo aplikace Google (myaccount.google.com/apppasswords) – povinné |
-| `SMTP_HOST` / `SMTP_PORT` | volitelně, výchozí `smtp.gmail.com` / `465` |
-| `POPTAVKA_TO` | volitelně jiný příjemce, výchozí `info@fin-set.cz` |
+| `POPTAVKA_TOKEN` | tajný token, musí sedět s `TOKEN` v Apps Scriptu – povinné |
+| `POPTAVKA_WEBHOOK_URL` | volitelně jiná adresa web appu (`…/exec`), výchozí je v kódu |
 
-Po změně proměnných je potřeba projekt znovu nasadit (Redeploy). Když odeslání
-selže, formulář netvrdí, že poptávka odešla — nabídne telefon a e-mail
-s předvyplněnou zprávou. Chyby jsou vidět ve Vercelu → Logs (`[poptavka]`).
+Po změně proměnných je potřeba projekt znovu nasadit (Redeploy). Po změně kódu
+Apps Scriptu: Implementovat → Spravovat implementace → upravit → Verze: Nová verze
+(adresa zůstane stejná). Když uložení selže, formulář netvrdí, že poptávka odešla —
+nabídne telefon a e-mail s předvyplněnou zprávou. Chyby: Vercel → Logs
+(`[poptavka]`), Apps Script → Spuštění.
 
 ## Nasazení
 

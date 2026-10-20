@@ -1,8 +1,5 @@
 {
   "name": "fin-set",
   "private": true,
-  "description": "Web fin-set.cz – statické stránky + funkce /api/poptavka pro odesílání formuláře",
-  "dependencies": {
-    "nodemailer": "6.9.16"
-  }
+  "description": "Web fin-set.cz – statické stránky + funkce /api/poptavka (ukládá poptávky do Google Tabulky)"
 }
