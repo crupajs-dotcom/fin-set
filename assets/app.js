@@ -1090,12 +1090,12 @@ function renderGdpr() {
         <p>Údaje předáváme pouze tam, kam je to nutné k vyřízení vaší poptávky: bankám a finančním
         institucím, které pro vás oslovujeme (vždy s vaším vědomím), společnosti Broker Trust, a.s.
         jako obchodníkovi, u něhož jsme registrováni, a poskytovatelům technických služeb
-        (doručení formuláře e-mailem, provoz webu). Neprodáváme je nikomu pro marketing.</p>
+        (uložení poptávky a upozornění e-mailem – Google, provoz webu – Vercel). Neprodáváme je nikomu pro marketing.</p>
 
         <h2>6. Co web sbírá sám</h2>
         <p>Web nepoužívá analytické ani reklamní cookies a nesleduje vaše chování. Načítá ale
-        písma ze služby Google Fonts, mapu z OpenStreetMap a knihovnu pro odeslání formuláře
-        z veřejné CDN — těmto službám se přitom předá vaše IP adresa.</p>
+        písma ze služby Google Fonts a mapu z OpenStreetMap — těmto službám se přitom předá
+        vaše IP adresa.</p>
 
         <h2>7. Vaše práva</h2>
         <p>Máte právo na přístup ke svým údajům, jejich opravu nebo výmaz, na omezení zpracování,
@@ -1400,7 +1400,8 @@ function validateField(el) {
 
 /* ── Odeslání poptávky ───────────────────────────────────
    Formulář posílá data na /api/poptavka (Vercel funkce v api/poptavka.js),
-   která pošle na info@fin-set.cz upozornění s údaji klienta.
+   která je uloží do Google Tabulky „Poptávky fin-set.cz“ a pošle upozornění
+   na info@fin-set.cz (přes Google Apps Script, viz zdroj/apps-script-poptavky.gs).
 ──────────────────────────────────────────────────────── */
 function sendContactEmails(data) {
   const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
