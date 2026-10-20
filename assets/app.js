@@ -297,7 +297,7 @@ function renderHome() {
         </div>
         <div class="reveal delay-1">
           <div class="hero-portrait">
-            <img src="/img/jan-klusak.webp" alt="Jan Klusák, zakladatel fin-set.cz" width="900" height="1236" fetchpriority="high" decoding="async">
+            <img src="/img/jan-klusak-vyrez.webp" alt="Jan Klusák, zakladatel fin-set.cz" width="900" height="1236" fetchpriority="high" decoding="async">
             <a class="hero-portrait-card" href="https://www.linkedin.com/in/honza-klusak/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profil – Jan Klusák">
               <div class="pc-icon" aria-hidden="true">in</div>
               <div>
@@ -759,7 +759,7 @@ function renderONas() {
       </div>
       <div class="team-grid-editorial">
         <article class="team-card-editorial reveal">
-          <div class="tce-img"><img src="/img/jan-klusak.webp" alt="Jan Klusák" width="900" height="1236" loading="lazy" decoding="async" style="object-position:center top"></div>
+          <div class="tce-img"><img src="/img/jan-klusak-vyrez.webp" alt="Jan Klusák" width="900" height="1236" loading="lazy" decoding="async" style="object-position:center top"></div>
           <div class="tce-overlay">
             <div class="tce-overlay-inner">
               <div class="eyebrow light"><span class="num">JK</span> Zakladatel</div>
