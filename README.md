@@ -43,24 +43,27 @@ měla vlastní `<title>`, popisek a hotové HTML pro vyhledávače, spustí
 uloží jako statický soubor. V prohlížeči pak převezme řízení zpět SPA a další
 prokliky jsou okamžité.
 
-## Formulář – co je potřeba dodělat
+## Formulář
 
-Odesílání běží přes [EmailJS](https://emailjs.com). V `assets/app.js` nahoře jsou
-čtyři konstanty s placeholdery `ZDE_…`:
+Oba formuláře (stránka Kontakt i boční formulář u služeb) posílají data na
+`/api/poptavka` – Vercel funkci v `api/poptavka.js`. Ta pošle poptávku ze
+schránky **info@fin-set.cz** na **info@fin-set.cz** (Odpovědět = odpověď klientovi)
+a klientovi automatické potvrzení. Používá `nodemailer` (viz `package.json`),
+Vercel ho nainstaluje sám.
 
-```js
-const EMAILJS_PUBLIC_KEY      = 'ZDE_VAS_PUBLIC_KEY';
-const EMAILJS_SERVICE_ID      = 'ZDE_SERVICE_ID';
-const EMAILJS_TEMPLATE_NOTIFY = 'ZDE_TEMPLATE_NOTIFY';   // notifikace pro Jana
-const EMAILJS_TEMPLATE_REPLY  = 'ZDE_TEMPLATE_REPLY';    // potvrzení klientovi
-```
+Ve Vercelu (Settings → Environment Variables) musí být nastaveno:
 
-Dokud jsou nevyplněné, formulář **netvrdí, že poptávka odešla** — místo toho
-nabídne telefon a e-mail s předvyplněnou zprávou. Po vyplnění klíčů a
-přegenerování začne odesílat.
+| Proměnná | Hodnota |
+|---|---|
+| `SMTP_PASS` | heslo ke schránce info@fin-set.cz (povinné) |
+| `SMTP_USER` | volitelně, výchozí `info@fin-set.cz` |
+| `SMTP_HOST` / `SMTP_PORT` | volitelně, výchozí `wes1-smtp.wedos.net` / `465` |
+| `POPTAVKA_TO` | volitelně jiný příjemce, výchozí `info@fin-set.cz` |
+| `POPTAVKA_POTVRZENI` | `0` vypne potvrzení klientovi |
 
-Šablona notifikace používá proměnné `from_name`, `from_email`, `phone`, `type`,
-`message`, `reply_to`; šablona potvrzení `to_name`, `to_email`, `reply_to`.
+Po změně proměnných je potřeba projekt znovu nasadit (Redeploy). Když odeslání
+selže, formulář netvrdí, že poptávka odešla — nabídne telefon a e-mail
+s předvyplněnou zprávou. Chyby jsou vidět ve Vercelu → Logs (`[poptavka]`).
 
 ## Nasazení
 

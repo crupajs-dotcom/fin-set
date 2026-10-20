@@ -44,7 +44,7 @@ const ctx = vm.createContext({
   navigator: { userAgent:'node' },
   console, setTimeout, clearTimeout, requestAnimationFrame:noop,
   IntersectionObserver: class { observe(){} unobserve(){} disconnect(){} },
-  emailjs: undefined, URLSearchParams, URL, encodeURIComponent, decodeURIComponent,
+  URLSearchParams, URL, encodeURIComponent, decodeURIComponent,
 });
 vm.runInContext(appJs + '\nglobalThis.__EXPORT = { ROUTES, SERVICES };', ctx, { filename:'app.js' });
 const { ROUTES, SERVICES } = ctx.__EXPORT;

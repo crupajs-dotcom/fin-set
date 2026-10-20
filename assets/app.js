@@ -1398,61 +1398,24 @@ function validateField(el) {
   return !err;
 }
 
-/* ── EmailJS konfigurace ─────────────────────────────────
-   Vyplňte po registraci na emailjs.com:
-   EMAILJS_PUBLIC_KEY   → Account → API Keys → Public Key
-   EMAILJS_SERVICE_ID   → Email Services → Service ID
-   EMAILJS_TEMPLATE_NOTIFY  → Email Templates → ID šablony "Nová poptávka" (pro Jana)
-   EMAILJS_TEMPLATE_REPLY   → Email Templates → ID šablony "Potvrzení klientovi"
+/* ── Odeslání poptávky ───────────────────────────────────
+   Formulář posílá data na /api/poptavka (Vercel funkce v api/poptavka.js),
+   která je odešle ze schránky info@fin-set.cz a klientovi pošle potvrzení.
 ──────────────────────────────────────────────────────── */
-const EMAILJS_PUBLIC_KEY        = 'ZDE_VAS_PUBLIC_KEY';
-const EMAILJS_SERVICE_ID        = 'ZDE_SERVICE_ID';
-const EMAILJS_TEMPLATE_NOTIFY   = 'ZDE_TEMPLATE_NOTIFY';
-const EMAILJS_TEMPLATE_REPLY    = 'ZDE_TEMPLATE_REPLY';
-
-// Dokud jsou klíče nevyplněné, formulář nesmí tvrdit, že poptávka odešla.
-const EMAILJS_READY = ![EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_NOTIFY, EMAILJS_TEMPLATE_REPLY]
-  .some(v => !v || v.startsWith('ZDE_'));
-
-function initEmailJSWhenReady() {
-  if (!EMAILJS_READY) {
-    console.warn('[fin-set] EmailJS není nakonfigurován – formulář nabídne telefon a e-mail místo falešného potvrzení.');
-    return;
-  }
-  if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-  else window.addEventListener('load', () => {
-    if (typeof emailjs !== 'undefined') emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-  }, { once: true });
-}
-initEmailJSWhenReady();
-
 function sendContactEmails(data) {
-  if (!EMAILJS_READY) return Promise.reject(new Error('EmailJS není nakonfigurován'));
-  if (typeof emailjs === 'undefined') return Promise.reject(new Error('Knihovna EmailJS se nenačetla'));
-
-  const templateParams = {
-    from_name:  data.name,
-    from_email: data.email,
-    phone:      data.phone,
-    type:       data.type || '—',
-    message:    data.message || '—',
-    reply_to:   data.email,
-  };
-
-  // 1) Notifikace pro Jana
-  const notify = emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_NOTIFY, templateParams);
-
-  // 2) Automatická odpověď klientovi – jen když e-mail vyplnil
-  if (!data.email) return notify;
-
-  const reply = emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_REPLY, {
-    to_name:  data.name,
-    to_email: data.email,
-    reply_to: 'info@fin-set.cz',
-  });
-
-  // Poptávka je doručená i tehdy, když se nepovede odeslat potvrzení klientovi
-  return notify.then(r => reply.catch(e => console.warn('[fin-set] Potvrzení klientovi neodešlo:', e)).then(() => r));
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), 20000) : null;
+  return fetch('/api/poptavka', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...data, gdpr: true, page: location.pathname }),
+    signal: ctrl ? ctrl.signal : undefined,
+  })
+    .then(r => r.json().catch(() => ({})).then(j => {
+      if (!r.ok || !j.ok) throw new Error('Server vrátil ' + r.status + (j.error ? ' (' + j.error + ')' : ''));
+      return j;
+    }))
+    .finally(() => { if (timer) clearTimeout(timer); });
 }
 
 function initForms() {
